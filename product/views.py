@@ -121,7 +121,6 @@ class ProductListCreateView(generics.ListCreateAPIView):
                 "name",
                 "price",
                 "market_price",
-                "image",
                 "thumbnail_image",
                 "thumbnail_alt",
                 "unit",
