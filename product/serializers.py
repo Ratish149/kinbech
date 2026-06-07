@@ -10,13 +10,13 @@ class SubcategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subcategory
-        fields = ["id", "slug", "name", "category"]
+        fields = ["id", "slug", "name", "is_featured", "category"]
 
 
 class SubcategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subcategory
-        fields = ["id", "slug", "name"]
+        fields = ["id", "slug", "name", "is_featured"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -25,13 +25,13 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "slug", "name", "subs"]
+        fields = ["id", "slug", "name", "is_featured", "image", "subs"]
 
 
 class CategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "slug", "name"]
+        fields = ["id", "slug", "name", "is_featured", "image"]
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

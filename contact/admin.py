@@ -9,7 +9,6 @@ from .models import Contact
 @admin.register(Contact)
 class ContactAdmin(ModelAdmin):
     list_display = (
-        "id",
         "name",
         "phone_number",
         "email",

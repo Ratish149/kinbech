@@ -1,5 +1,7 @@
 from rest_framework import generics
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from kinbech.utils.pagination import CustomPagination
 from kinbech.utils.permissions import IsAdminOrReadOnly
 
 from .models import Contact
@@ -18,9 +20,14 @@ class ContactListCreateView(generics.ListCreateAPIView):
         "message",
         "created_at",
         "updated_at",
-    )
+    ).order_by("-created_at")
     serializer_class = ContactSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = CustomPagination
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsAuthenticated()]
+        return [AllowAny()]
 
 
 class ContactDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -33,7 +40,7 @@ class ContactDetailView(generics.RetrieveUpdateDestroyAPIView):
         "message",
         "created_at",
         "updated_at",
-    )
+    ).order_by("-created_at")
     serializer_class = ContactSerializer
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = "id"

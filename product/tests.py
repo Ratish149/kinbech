@@ -210,3 +210,68 @@ class ProductReviewAPITestCase(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(ProductReview.objects.count(), 1)
+
+
+class CategoryFilterAPITests(APITestCase):
+    def setUp(self):
+        self.featured_category = Category.objects.create(
+            name="Featured Category", slug="feat-cat", is_featured=True
+        )
+        self.non_featured_category = Category.objects.create(
+            name="Normal Category", slug="norm-cat", is_featured=False
+        )
+
+        self.feat_sub1 = Subcategory.objects.create(
+            category=self.featured_category,
+            name="Featured Sub 1",
+            slug="feat-sub-1",
+            is_featured=True,
+        )
+        self.norm_sub1 = Subcategory.objects.create(
+            category=self.featured_category,
+            name="Normal Sub 1",
+            slug="norm-sub-1",
+            is_featured=False,
+        )
+
+        self.feat_sub2 = Subcategory.objects.create(
+            category=self.non_featured_category,
+            name="Featured Sub 2",
+            slug="feat-sub-2",
+            is_featured=True,
+        )
+        self.norm_sub2 = Subcategory.objects.create(
+            category=self.non_featured_category,
+            name="Normal Sub 2",
+            slug="norm-sub-2",
+            is_featured=False,
+        )
+
+    def test_list_categories_no_filter(self):
+        url = reverse("category-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should return both categories
+        self.assertEqual(len(response.data), 2)
+
+        # First category: feat-cat should have 2 subcategories
+        feat_cat_data = next(c for c in response.data if c["slug"] == "feat-cat")
+        self.assertEqual(len(feat_cat_data["subs"]), 2)
+
+    def test_list_categories_filtered_featured(self):
+        url = reverse("category-list")
+        response = self.client.get(url, {"is_featured": "true"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should return only the featured category
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["slug"], "feat-cat")
+        # All subcategories under it (both featured and non-featured since nested is not filtered)
+        self.assertEqual(len(response.data[0]["subs"]), 2)
+
+    def test_list_subcategories_filtered_featured(self):
+        url = reverse("subcategory-list", kwargs={"category_slug": "feat-cat"})
+        response = self.client.get(url, {"is_featured": "true"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should return only featured subcategories under feat-cat (feat-sub-1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["slug"], "feat-sub-1")

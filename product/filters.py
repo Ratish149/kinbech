@@ -1,6 +1,22 @@
 import django_filters
 
-from .models import Product, ProductReview
+from .models import Category, Product, ProductReview, Subcategory
+
+
+class CategoryFilter(django_filters.FilterSet):
+    is_featured = django_filters.BooleanFilter(field_name="is_featured")
+
+    class Meta:
+        model = Category
+        fields = ["is_featured"]
+
+
+class SubcategoryFilter(django_filters.FilterSet):
+    is_featured = django_filters.BooleanFilter(field_name="is_featured")
+
+    class Meta:
+        model = Subcategory
+        fields = ["is_featured"]
 
 
 class ProductFilter(django_filters.FilterSet):

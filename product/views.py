@@ -6,7 +6,12 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from kinbech.utils.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 
-from .filters import ProductFilter, ProductReviewFilter
+from .filters import (
+    CategoryFilter,
+    ProductFilter,
+    ProductReviewFilter,
+    SubcategoryFilter,
+)
 from .models import Category, Product, ProductImage, ProductReview, Subcategory
 from .serializers import (
     CategorySerializer,
@@ -21,20 +26,27 @@ class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.prefetch_related(
         Prefetch(
             "subcategories",
-            queryset=Subcategory.objects.only("id", "slug", "name", "category_id"),
+            queryset=Subcategory.objects.only(
+                "id", "slug", "name", "category_id", "is_featured"
+            ),
         )
-    ).only("id", "slug", "name")
+    ).only("id", "slug", "name", "is_featured")
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CategoryFilter
 
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.prefetch_related(
         Prefetch(
             "subcategories",
-            queryset=Subcategory.objects.only("id", "slug", "name", "category_id"),
+            queryset=Subcategory.objects.only(
+                "id", "slug", "name", "category_id", "is_featured"
+            ),
         )
-    ).only("id", "slug", "name")
+    ).only("id", "slug", "name", "is_featured")
     serializer_class = CategorySerializer
     lookup_field = "slug"
     permission_classes = [IsAdminOrReadOnly]
@@ -43,14 +55,16 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 class SubcategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = SubcategorySerializer
     permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SubcategoryFilter
 
     def get_queryset(self):
         category_slug = self.kwargs.get("category_slug")
         queryset = Subcategory.objects.select_related("category").only(
-            "id", "slug", "name", "category__id", "category__slug"
+            "id", "slug", "name", "is_featured", "category__id", "category__slug"
         )
         if category_slug:
-            return queryset.filter(category__slug=category_slug)
+            queryset = queryset.filter(category__slug=category_slug)
         return queryset
 
     def perform_create(self, serializer):
@@ -73,7 +87,7 @@ class SubcategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         category_slug = self.kwargs.get("category_slug")
         queryset = Subcategory.objects.select_related("category").only(
-            "id", "slug", "name", "category__id", "category__slug"
+            "id", "slug", "name", "is_featured", "category__id", "category__slug"
         )
         if category_slug:
             return queryset.filter(category__slug=category_slug)
