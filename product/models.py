@@ -65,7 +65,7 @@ class Product(models.Model):
     market_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
-    image = models.URLField(max_length=1000, blank=True, null=True)
+    image = models.FileField(max_length=1000, blank=True, null=True)
     thumbnail_image = models.FileField(
         upload_to="product_thumbnails/", blank=True, null=True
     )

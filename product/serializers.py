@@ -51,6 +51,9 @@ class ProductSerializer(serializers.ModelSerializer):
         max_digits=10, decimal_places=2, coerce_to_string=False
     )
     images = ProductImageSerializer(many=True, read_only=True)
+    uploaded_images = serializers.ListField(
+        child=serializers.FileField(), write_only=True, required=False
+    )
     average_rating = serializers.FloatField(read_only=True)
     total_reviews = serializers.IntegerField(read_only=True)
 
@@ -73,11 +76,26 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_featured",
             "is_best_seller",
             "images",
+            "uploaded_images",
             "average_rating",
             "total_reviews",
             "meta_title",
             "meta_description",
         ]
+
+    def create(self, validated_data):
+        uploaded_images = validated_data.pop("uploaded_images", [])
+        product = super().create(validated_data)
+        for img in uploaded_images:
+            ProductImage.objects.create(product=product, image=img)
+        return product
+
+    def update(self, instance, validated_data):
+        uploaded_images = validated_data.pop("uploaded_images", [])
+        product = super().update(instance, validated_data)
+        for img in uploaded_images:
+            ProductImage.objects.create(product=product, image=img)
+        return product
 
 
 class ProductListSerializer(serializers.ModelSerializer):
