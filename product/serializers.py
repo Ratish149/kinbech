@@ -116,6 +116,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "thumbnail_image",
             "thumbnail_alt",
             "unit",
+            "stock",
             "is_featured",
             "is_best_seller",
             "average_rating",
