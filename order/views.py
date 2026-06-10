@@ -2,6 +2,8 @@ from django.db.models import Prefetch
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
+from kinbech.utils.pagination import CustomPagination
+
 from .filters import OrderFilter
 from .models import Order, OrderItem
 from .serializers import OrderDetailSerializer, OrderListSerializer
@@ -11,6 +13,7 @@ class OrderListCreateView(generics.ListCreateAPIView):
     filterset_class = OrderFilter
     search_fields = ["order_id", "full_name", "phone_number"]
     ordering_fields = ["created_at", "total_amount"]
+    pagination_class = CustomPagination
 
     def get_permissions(self):
         if self.request.method == "POST":
