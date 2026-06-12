@@ -5,6 +5,7 @@ from .views import (
     CategoryChartAPIView,
     DashboardStatsAPIView,
     SalesChartAPIView,
+    RecentOrdersAPIView,
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path("sales-chart/", SalesChartAPIView.as_view(), name="sales-chart"),
     path("category-chart/", CategoryChartAPIView.as_view(), name="category-chart"),
     path("alerts/", AlertsAPIView.as_view(), name="alerts"),
+    path("recent-orders/", RecentOrdersAPIView.as_view(), name="recent-orders"),
 ]

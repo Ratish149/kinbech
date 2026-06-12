@@ -2,12 +2,11 @@ from datetime import timedelta
 
 from django.db.models import Q, Sum
 from django.utils import timezone
+from order.models import Order, OrderItem
+from product.models import Category, Product
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from order.models import Order, OrderItem
-from product.models import Category, Product
 
 
 class DashboardStatsAPIView(APIView):
@@ -79,7 +78,42 @@ class DashboardStatsAPIView(APIView):
         ).count()
         live_animals_hint = f"{live_categories_count} categories"
 
-        # Recent Orders (limit 5)
+        return Response({
+            "kpis": {
+                "today_sales": {
+                    "value": f"Rs {int(today_sales):,}" if today_sales >= 1 else "Rs 0",
+                    "hint": sales_hint,
+                    "trend": sales_trend,
+                },
+                "today_orders": {
+                    "value": str(today_orders),
+                    "hint": orders_hint,
+                    "trend": "up" if today_orders > 0 else "neutral",
+                },
+                "low_stock_items": {
+                    "value": str(low_stock_count),
+                    "hint": low_stock_hint,
+                    "trend": "down" if low_stock_count > 0 else "neutral",
+                },
+                "live_animals": {
+                    "value": str(live_animals_count),
+                    "hint": live_animals_hint,
+                    "trend": "neutral",
+                },
+            }
+        })
+
+
+class RecentOrdersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_staff:
+            return Response(
+                {"detail": "Only staff members can view dashboard stats."}, status=403
+            )
+
+        now = timezone.now()
         recent_orders_qs = Order.objects.only(
             "order_id", "full_name", "total_amount", "status", "created_at"
         ).order_by("-created_at")[:5]
@@ -104,31 +138,7 @@ class DashboardStatsAPIView(APIView):
                 "time_ago": time_str,
             })
 
-        return Response({
-            "kpis": {
-                "today_sales": {
-                    "value": f"Rs {int(today_sales):,}" if today_sales >= 1 else "Rs 0",
-                    "hint": sales_hint,
-                    "trend": sales_trend,
-                },
-                "today_orders": {
-                    "value": str(today_orders),
-                    "hint": orders_hint,
-                    "trend": "up" if today_orders > 0 else "neutral",
-                },
-                "low_stock_items": {
-                    "value": str(low_stock_count),
-                    "hint": low_stock_hint,
-                    "trend": "down" if low_stock_count > 0 else "neutral",
-                },
-                "live_animals": {
-                    "value": str(live_animals_count),
-                    "hint": live_animals_hint,
-                    "trend": "neutral",
-                },
-            },
-            "recent_orders": recent_orders,
-        })
+        return Response(recent_orders)
 
 
 class SalesChartAPIView(APIView):
@@ -149,15 +159,20 @@ class SalesChartAPIView(APIView):
             day_end = day_date + timedelta(days=1)
             day_name = day_date.strftime("%a")
 
-            day_sales = (
-                Order.objects
-                .filter(created_at__gte=day_date, created_at__lt=day_end)
-                .exclude(status="cancelled")
-                .aggregate(total=Sum("total_amount"))["total"]
-                or 0.00
-            )
+            day_orders_qs = Order.objects.filter(
+                created_at__gte=day_date, created_at__lt=day_end
+            ).exclude(status="cancelled")
 
-            sales_chart.append({"d": day_name, "v": float(day_sales)})
+            day_sales = (
+                day_orders_qs.aggregate(total=Sum("total_amount"))["total"] or 0.00
+            )
+            day_orders = day_orders_qs.count()
+
+            sales_chart.append({
+                "d": day_name,
+                "v": float(day_sales),
+                "orders": day_orders,
+            })
 
         return Response(sales_chart)
 
