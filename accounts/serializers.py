@@ -20,7 +20,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "username", "email", "is_staff")
 
 
-
 class POSCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -28,7 +27,9 @@ class POSCustomerSerializer(serializers.ModelSerializer):
 
     def validate_phone_number(self, value):
         if User.objects.filter(phone_number=value).exists():
-            raise serializers.ValidationError("A user with this phone number already exists.")
+            raise serializers.ValidationError(
+                "A user with this phone number already exists."
+            )
         return value
 
 
@@ -92,7 +93,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             last_name=last_name,
         )
         return user
-
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
