@@ -43,6 +43,7 @@ class OrderListCreateView(generics.ListCreateAPIView):
             "payment_method",
             "status",
             "is_paid",
+            "is_pos_order",
             "created_at",
         ).order_by("-created_at")
 
@@ -75,6 +76,7 @@ class OrderDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             "payment_method",
             "status",
             "is_paid",
+            "is_pos_order",
             "transaction_id",
             "tracking_number",
             "note",

@@ -40,6 +40,7 @@ class OrderListSerializer(serializers.ModelSerializer):
             "payment_method",
             "status",
             "is_paid",
+            "is_pos_order",
             "created_at",
         ]
 
@@ -63,6 +64,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "payment_method",
             "status",
             "is_paid",
+            "is_pos_order",
             "transaction_id",
             "tracking_number",
             "note",
@@ -76,10 +78,11 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         items_data = validated_data.pop("items")
 
         with transaction.atomic():
-            # Automatically assign the request user if authenticated
+            # Automatically assign the request user if authenticated, unless 'user' is already set or request user is staff
             request = self.context.get("request")
             if request and request.user and request.user.is_authenticated:
-                validated_data["user"] = request.user
+                if "user" not in validated_data and not request.user.is_staff:
+                    validated_data["user"] = request.user
 
             order = Order.objects.create(**validated_data)
 

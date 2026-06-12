@@ -46,6 +46,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=100, choices=PAYMENT_METHOD_CHOICES)
     status = models.CharField(max_length=100, choices=STATUS_CHOICES, default="pending")
     is_paid = models.BooleanField(default=False)
+    is_pos_order = models.BooleanField(default=False)
     transaction_id = models.CharField(max_length=100, null=True, blank=True)
 
     # Delivery Info
