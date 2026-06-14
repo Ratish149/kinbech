@@ -27,4 +27,5 @@ class OrderFilter(django_filters.FilterSet):
             "payment_method": ["exact"],
             "is_paid": ["exact"],
             "is_pos_order": ["exact"],
+            "user": ["exact"],
         }

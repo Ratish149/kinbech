@@ -3,6 +3,7 @@ from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import (
+    AdminCustomerSerializer,
     CustomTokenObtainPairSerializer,
     POSCustomerSerializer,
     UserDetailSerializer,
@@ -31,14 +32,46 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 class CustomerListCreateView(generics.ListCreateAPIView):
-    serializer_class = POSCustomerSerializer
     permission_classes = [permissions.IsAdminUser]
 
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return POSCustomerSerializer
+        return AdminCustomerSerializer
+
     def get_queryset(self):
-        queryset = User.objects.filter(is_staff=False)
+        from django.db.models import Count, DecimalField, Sum
+        from django.db.models.functions import Coalesce
+
+        queryset = (
+            User.objects
+            .filter(is_staff=False)
+            .annotate(
+                total_orders=Count("orders", distinct=True),
+                total_spent=Coalesce(
+                    Sum("orders__total_amount"),
+                    0.0,
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
+                ),
+            )
+            .order_by("-date_joined")
+        )
+
+        search = self.request.query_params.get("search")
+        if search:
+            from django.db.models import Q
+
+            queryset = queryset.filter(
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(phone_number__icontains=search)
+                | Q(email__icontains=search)
+            )
+
         phone_number = self.request.query_params.get("phone_number")
         if phone_number:
             queryset = queryset.filter(phone_number__icontains=phone_number)
+
         return queryset
 
     def perform_create(self, serializer):
@@ -46,3 +79,21 @@ class CustomerListCreateView(generics.ListCreateAPIView):
         user = serializer.save(username=phone_number)
         user.set_unusable_password()
         user.save()
+
+
+class CustomerDetailAPIView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AdminCustomerSerializer
+
+    def get_queryset(self):
+        from django.db.models import Count, DecimalField, Sum
+        from django.db.models.functions import Coalesce
+
+        return User.objects.filter(is_staff=False).annotate(
+            total_orders=Count("orders", distinct=True),
+            total_spent=Coalesce(
+                Sum("orders__total_amount"),
+                0.0,
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+        )

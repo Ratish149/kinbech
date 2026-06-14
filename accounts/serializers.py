@@ -130,4 +130,32 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
 
         # Add user details to response
+        data["user"] = {
+            "id": self.user.id,
+            "username": self.user.username,
+            "email": self.user.email,
+            "phone_number": self.user.phone_number,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+        }
         return data
+
+
+class AdminCustomerSerializer(serializers.ModelSerializer):
+    total_orders = serializers.IntegerField(read_only=True)
+    total_spent = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "email",
+            "phone_number",
+            "first_name",
+            "last_name",
+            "date_joined",
+            "total_orders",
+            "total_spent",
+        )
+
